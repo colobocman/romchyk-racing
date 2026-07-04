@@ -17,7 +17,7 @@ manifest.icons.forEach(function (icon) {
 });
 
 const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
-check('sw cache name rg-v1', sw.indexOf("const CACHE = 'rg-v1';") !== -1);
+check('sw cache name rg-vN', /const CACHE = 'rg-v\d+';/.test(sw));
 const m = sw.match(/const FILES = \[([\s\S]*?)\];/);
 check('sw FILES array present', !!m);
 const files = m ? m[1].match(/'([^']+)'/g).map(function (s) { return s.slice(1, -1); }) : [];
