@@ -4,3 +4,4 @@ require('./learning.test.js');
 require('./audio.test.js');
 require('./sprites.test.js');
 require('./road.test.js');
+require('./tracks.test.js');
