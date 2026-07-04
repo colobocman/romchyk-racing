@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тест гонки</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; touch-action: none; }
+  canvas { display: block; }
+  #bar { position: fixed; top: 8px; left: 8px; font-family: "Chalkboard SE","Comic Sans MS",cursive,sans-serif; }
+  button { font-size: 18px; padding: 6px 12px; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="bar">
+  <button id="pause">Пауза</button>
+  <button id="resume">Далі</button>
+  <button id="confetti">Конфеті</button>
+</div>
+<script src="../js/utils.js"></script>
+<script src="../js/audio.js"></script>
+<script src="../js/sprites.js"></script>
+<script src="../js/road.js"></script>
+<script src="../js/tracks.js"></script>
+<script src="../js/race.js"></script>
+<script>
+(function () {
+  'use strict';
+  const RG = window.RG;
+  const canvas = document.getElementById('game');
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+  const chars = RG.sprites.CHARACTERS;
+  const cars = RG.sprites.CAR_TYPES;
+  const r = RG.race.create({
+    canvas: canvas,
+    trackDef: RG.tracks.TRACKS[0],
+    playerChar: chars[0],
+    carDef: cars[0],
+    opponents: [
+      { charDef: chars[1], carDef: cars[1] },
+      { charDef: chars[2], carDef: cars[2] },
+      { charDef: chars[3], carDef: cars[3] }
+    ]
+  });
+  r.onFinish = function () { r.confetti(); };
+  document.getElementById('pause').onclick = function () { r.pause(); };
+  document.getElementById('resume').onclick = function () { r.resume(); };
+  document.getElementById('confetti').onclick = function () { r.confetti(); };
+  canvas.addEventListener('pointerdown', function (e) { r.setPointerX(e.clientX / window.innerWidth); });
+  canvas.addEventListener('pointermove', function (e) { if (e.buttons) r.setPointerX(e.clientX / window.innerWidth); });
+  canvas.addEventListener('pointerup', function () { r.setPointerX(null); });
+  const keys = {};
+  function sync() {
+    r.setKeys(!!(keys.ArrowLeft || keys.a || keys.A), !!(keys.ArrowRight || keys.d || keys.D));
+  }
+  window.addEventListener('keydown', function (e) { keys[e.key] = true; sync(); });
+  window.addEventListener('keyup', function (e) { keys[e.key] = false; sync(); });
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    r.update(dt);
+    r.draw();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

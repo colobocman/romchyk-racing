@@ -5,3 +5,4 @@ require('./audio.test.js');
 require('./sprites.test.js');
 require('./road.test.js');
 require('./tracks.test.js');
+require('./race.test.js');
