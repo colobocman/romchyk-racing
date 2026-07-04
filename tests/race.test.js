@@ -1,6 +1,8 @@
 const { check, done } = require('./t.js');
 const road = require('../js/road.js');
 const race = require('../js/race.js');
+const tracks = require('../js/tracks.js');
+const events = require('../js/events.js');
 
 const PAL = {
   skyTop: '#4FC3F7', skyBottom: '#B3E5FC', hillFar: '#90A4AE', hillNear: '#78909C',
@@ -133,5 +135,47 @@ check('resume очищає stopScene', r11.stopScene === null && r11.state === '
 r11.confetti();
 r11.update(0.1);
 check('confetti не ламає update', r11.state === 'running');
+
+// Конуси НА дорозі: кожна повна траса має м'які перешкоди зі |offset| < 1,
+// досяжні для зіткнення і подалі від запланованих воріт та зупинок.
+for (let ti = 0; ti < tracks.TRACKS.length; ti++) {
+  const trackDef = tracks.TRACKS[ti];
+  const rc = race.create({
+    canvas: { width: 800, height: 600, getContext: function () { return null; } },
+    trackDef: trackDef, playerChar: CHAR, carDef: CAR, opponents: []
+  });
+  const coneSegs = [];
+  let reachable = true;
+  for (let i = 0; i < rc.segments.length; i++) {
+    const sps = rc.segments[i].sprites;
+    for (let j = 0; j < sps.length; j++) {
+      if (sps[j].key === '🚧' && Math.abs(sps[j].offset) < 1) {
+        coneSegs.push(i);
+        if (Math.abs(sps[j].offset) > 0.7) reachable = false;
+      }
+    }
+  }
+  check(trackDef.name + ': є конуси на дорозі (|offset| < 1)', coneSegs.length >= 3);
+  check(trackDef.name + ': конуси досяжні (|offset| <= 0.7)', reachable);
+  const evs = events.plan(rc.length, {});
+  const farFromEvents = coneSegs.every(function (i) {
+    const z = i * road.SEG_LEN;
+    return evs.every(function (ev) { return Math.abs(ev.z - z) >= 10 * road.SEG_LEN; });
+  });
+  check(trackDef.name + ': конуси подалі від воріт і зупинок', farFromEvents);
+}
+
+// Конус, поставлений placeCones, реально спрацьовує при наїзді.
+const rHit = race.create({
+  canvas: { width: 800, height: 600, getContext: function () { return null; } },
+  trackDef: fakeTrack([['straight', 40]]), playerChar: CHAR, carDef: CAR, opponents: []
+});
+const firstConeIdx = Math.floor(race.CONE_FRACS[0] * rHit.segments.length);
+const firstCone = rHit.segments[firstConeIdx].sprites.filter(function (sp) { return sp.key === '🚧'; })[0];
+rHit.playerZ = firstConeIdx * road.SEG_LEN;
+rHit.playerX = firstCone.offset;
+rHit.speed = 1000;
+rHit.update(0.001);
+check('конус із placeCones сповільнює гравця', firstCone.hit === true && rHit.speed < 400);
 
 done();

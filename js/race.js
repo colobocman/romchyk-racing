@@ -23,6 +23,21 @@
     }
   }
 
+  // М'які перешкоди: кілька конусів прямо на дорозі (|offset| < 1), щоб
+  // зіткнення (веселий звук + коротке сповільнення) траплялося в реальній грі.
+  // Частки обрані подалі від воріт (GATE_FRACS в events.js) та сюжетних
+  // зупинок (STOP_FRACS): на повних трасах відстань до будь-якої події
+  // не менша за ~10 сегментів.
+  race.CONE_FRACS = [0.15, 0.29, 0.45, 0.63, 0.76, 0.93];
+  const CONE_LANES = [-0.6, 0, 0.6];
+
+  function placeCones(segments) {
+    for (let i = 0; i < race.CONE_FRACS.length; i++) {
+      const idx = Math.min(Math.floor(race.CONE_FRACS[i] * segments.length), segments.length - 1);
+      segments[idx].sprites.push({ key: '🚧', offset: CONE_LANES[i % CONE_LANES.length], scale: 1 });
+    }
+  }
+
   function drawStopScene(ctx, w, h, scene) {
     ctx.save();
     ctx.textAlign = 'center';
@@ -99,6 +114,7 @@
     }
     const built = road.buildTrack({ layout: layout });
     decorate(built.segments, trackDef.scenery);
+    placeCones(built.segments);
 
     const lanes = [-0.5, 0, 0.5];
     const r = {
