@@ -23,6 +23,66 @@
     }
   }
 
+  function drawStopScene(ctx, w, h, scene) {
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    if (scene.type === 'train') {
+      // Потяг 🚂 + рівно scene.count вагонів 🚃 в'їжджає і зупиняється по центру,
+      // щоб вагони можна було порахувати на екрані.
+      const size = Math.round(Math.min(w / (scene.count + 3), h * 0.14));
+      ctx.font = size + 'px sans-serif';
+      const total = (scene.count + 1) * size * 1.05;
+      const p = utils.easeInOut(Math.min(scene.t / 2.5, 1));
+      const cx = (w + total / 2) + (w / 2 - (w + total / 2)) * p;
+      const y = h * 0.42 + Math.sin(scene.t * 6) * 2;
+      for (let i = 0; i <= scene.count; i++) {
+        ctx.fillText(i === 0 ? '🚂' : '🚃', cx - total / 2 + size * 1.05 * i + size / 2, y);
+      }
+      // Опущений шлагбаум — смугаста перекладина.
+      const barY = h * 0.58;
+      const stripes = 8;
+      const stripeW = w * 0.7 / stripes;
+      for (let i = 0; i < stripes; i++) {
+        ctx.fillStyle = i % 2 === 0 ? '#E53935' : '#FFFFFF';
+        ctx.fillRect(w * 0.15 + i * stripeW, barY, stripeW, h * 0.02);
+      }
+    } else if (scene.type === 'police') {
+      // Доброзичлива поліцейська машина з мигалками, що блимають.
+      const size = Math.round(h * 0.2);
+      ctx.font = size + 'px sans-serif';
+      ctx.fillText('🚓', w / 2, h * 0.5);
+      const on = Math.floor(scene.t * 4) % 2 === 0;
+      ctx.globalAlpha = on ? 1 : 0.25;
+      ctx.fillStyle = '#2196F3';
+      ctx.beginPath();
+      ctx.arc(w / 2 - size * 0.35, h * 0.5 - size * 0.65, size * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = on ? 0.25 : 1;
+      ctx.fillStyle = '#E53935';
+      ctx.beginPath();
+      ctx.arc(w / 2 + size * 0.35, h * 0.5 - size * 0.65, size * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    } else if (scene.type === 'roadwork') {
+      // Екскаватор 🚜 і рівно scene.count конусів 🚧, що з'являються по черзі.
+      const size = Math.round(Math.min(w / (scene.count + 3), h * 0.12));
+      ctx.font = Math.round(size * 1.6) + 'px sans-serif';
+      ctx.fillText('🚜', w * 0.16, h * 0.45);
+      ctx.font = size + 'px sans-serif';
+      const startX = w * 0.3;
+      const step = (w * 0.62 - startX) / Math.max(scene.count - 1, 1);
+      for (let i = 0; i < scene.count; i++) {
+        const appear = utils.clamp(scene.t * 3 - i * 0.4, 0, 1);
+        if (appear <= 0) continue;
+        ctx.globalAlpha = appear;
+        ctx.fillText('🚧', startX + i * step, h * 0.45);
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+  }
+
   race.create = function (opts) {
     const canvas = opts.canvas;
     const ctx = (canvas && canvas.getContext) ? canvas.getContext('2d') : null;
@@ -255,6 +315,8 @@
         ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
       }
       ctx.globalAlpha = 1;
+
+      if (r.stopScene) drawStopScene(ctx, canvas.width, canvas.height, r.stopScene);
     };
 
     return r;

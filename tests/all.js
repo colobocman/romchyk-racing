@@ -6,3 +6,4 @@ require('./sprites.test.js');
 require('./road.test.js');
 require('./tracks.test.js');
 require('./race.test.js');
+require('./events.test.js');

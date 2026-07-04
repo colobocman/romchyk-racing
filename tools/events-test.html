@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <title>Тест подій — Ромчик-Гонщик</title>
+  <style>
+    body { margin: 0; background: #000; font-family: "Chalkboard SE","Comic Sans MS",cursive,sans-serif; }
+    canvas { display: block; margin: 0 auto; }
+    #start { position: fixed; top: 40%; left: 50%; transform: translate(-50%,-50%);
+             font-size: 40px; padding: 20px 40px; }
+    #task { display: none; position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+            background: #fff; border-radius: 16px; padding: 16px; text-align: center; }
+    #task button { font-size: 32px; min-width: 80px; min-height: 64px; margin: 8px; }
+    #task p { font-size: 24px; margin: 4px; }
+  </style>
+</head>
+<body>
+<canvas id="c" width="900" height="560"></canvas>
+<button id="start">СТАРТ ▶</button>
+<div id="task"></div>
+<script src="../js/utils.js"></script>
+<script src="../js/learning.js"></script>
+<script src="../js/audio.js"></script>
+<script src="../js/sprites.js"></script>
+<script src="../js/road.js"></script>
+<script src="../js/tracks.js"></script>
+<script src="../js/race.js"></script>
+<script src="../js/events.js"></script>
+<script>
+  const canvas = document.getElementById('c');
+  const taskDiv = document.getElementById('task');
+  const ui = {
+    showTask: function (task, cb) {
+      taskDiv.style.display = 'block';
+      let html = '<p>' + task.prompt + '</p>';
+      if (task.visual) {
+        html += '<p>' + task.visual.emoji.repeat(task.visual.count);
+        if (task.visual.emoji2) html += ' + ' + task.visual.emoji2.repeat(task.visual.count2);
+        html += '</p>';
+      }
+      taskDiv.innerHTML = html;
+      task.options.forEach(function (o, i) {
+        const b = document.createElement('button');
+        b.textContent = o.text;
+        b.onclick = function () { cb(i); };
+        taskDiv.appendChild(b);
+      });
+    },
+    hideTask: function () { taskDiv.style.display = 'none'; },
+    updateHUD: function (d) { document.title = '⭐ ' + d.stars; },
+    markWrong: function () {},
+    markCorrect: function () {}
+  };
+  document.getElementById('start').onclick = function () {
+    this.style.display = 'none';
+    RG.audio.init();
+    const S = RG.sprites;
+    const r = RG.race.create({
+      canvas: canvas,
+      trackDef: RG.tracks.TRACKS[0],
+      playerChar: S.CHARACTERS[0],
+      carDef: S.CAR_TYPES[0],
+      opponents: [
+        { charDef: S.CHARACTERS[1], carDef: S.CAR_TYPES[1] },
+        { charDef: S.CHARACTERS[2], carDef: S.CAR_TYPES[2] },
+        { charDef: S.CHARACTERS[3], carDef: S.CAR_TYPES[3] }
+      ]
+    });
+    RG.events.createController(r, RG.learning.createProgress(), ui, Math.random);
+    let left = false, right = false;
+    addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft' || e.key === 'a') left = true;
+      if (e.key === 'ArrowRight' || e.key === 'd') right = true;
+      r.setKeys(left, right);
+    });
+    addEventListener('keyup', function (e) {
+      if (e.key === 'ArrowLeft' || e.key === 'a') left = false;
+      if (e.key === 'ArrowRight' || e.key === 'd') right = false;
+      r.setKeys(left, right);
+    });
+    let last = performance.now();
+    function loop(now) {
+      r.update(Math.min((now - last) / 1000, 0.05));
+      last = now;
+      r.draw();
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  };
+</script>
+</body>
+</html>
