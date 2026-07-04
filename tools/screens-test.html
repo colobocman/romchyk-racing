@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тест екранів — Ромчик-Гонщик</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  #bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; display: flex;
+         flex-wrap: wrap; gap: 4px; padding: 6px; background: #263238; }
+  #bar button { font-size: 14px; padding: 6px 10px; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="ui"></div>
+<div id="bar">
+  <button onclick="RG.screens.show('menu')">menu</button>
+  <button onclick="RG.screens.show('player')">player</button>
+  <button onclick="RG.screens.show('car')">car</button>
+  <button onclick="RG.screens.show('track')">track</button>
+  <button onclick="showFinish()">finish</button>
+  <button onclick="RG.screens.hide()">hide</button>
+  <button onclick="hudOn()">HUD on</button>
+  <button onclick="RG.screens.updateHUD({stars: ++stars})">+star</button>
+  <button onclick="RG.screens.hideHUD()">HUD off</button>
+  <button onclick="showCount()">task: count</button>
+  <button onclick="showMath()">task: math</button>
+  <button onclick="RG.screens.hideTask()">hideTask</button>
+</div>
+<script src="../js/utils.js"></script>
+<script src="../js/audio.js"></script>
+<script src="../js/sprites.js"></script>
+<script src="../js/road.js"></script>
+<script src="../js/tracks.js"></script>
+<script src="../js/screens.js"></script>
+<script>
+  let stars = 0;
+  function log(msg) { console.log('[screens-test] ' + msg); }
+  document.body.addEventListener('pointerdown', function () { RG.audio.init(); }, { once: true });
+  RG.screens.init({
+    onPlay: function () { log('onPlay'); },
+    onPlayerPicked: function (ch) { log('onPlayerPicked: ' + ch.name); },
+    onCarPicked: function (car) { log('onCarPicked: ' + car.label); },
+    onTrackPicked: function (tr) { log('onTrackPicked: ' + tr.name); },
+    onAgain: function () { log('onAgain'); },
+    onOtherTrack: function () { log('onOtherTrack'); },
+    onHome: function () { log('onHome'); },
+    onMuteToggle: function () { RG.audio.setMuted(!RG.audio.isMuted()); log('onMuteToggle'); }
+  });
+  function hudOn() { RG.screens.showHUD(); RG.screens.updateHUD({ stars: stars }); }
+  function showFinish() {
+    RG.screens.show('finish', {
+      stars: 7,
+      sticker: { id: 'demo', emoji: '🏎️', label: 'Гоночна машинка' },
+      charName: 'Ромчик'
+    });
+  }
+  function showCount() {
+    RG.screens.showTask({
+      kind: 'count', skill: 'numbers',
+      prompt: 'Скільки вагонів у потяга?', say: 'Скільки вагонів у потяга?',
+      visual: { emoji: '🚃', count: 4 },
+      options: [{ text: 3, correct: false }, { text: 4, correct: true }, { text: 5, correct: false }]
+    }, function (i) {
+      log('answer: ' + i);
+      if (i === 1) { RG.screens.markCorrect(1); }
+      else { RG.screens.markWrong(i); RG.screens.markCorrect(1); }
+    });
+  }
+  function showMath() {
+    RG.screens.showTask({
+      kind: 'math', skill: 'math',
+      prompt: '2 + 1 = ?', say: 'Скільки буде 2 плюс 1?',
+      visual: { emoji: '🚗', count: 2, emoji2: '🚙', count2: 1 },
+      options: [{ text: 2, correct: false }, { text: 3, correct: true }, { text: 4, correct: false }]
+    }, function (i) { log('answer: ' + i); });
+  }
+</script>
+</body>
+</html>

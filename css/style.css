@@ -22,3 +22,89 @@ html, body {
 #ui > * {
   pointer-events: auto;
 }
+
+/* === UI-екрани (Task 9) === */
+#ui { font-family: 'Chalkboard SE', 'Comic Sans MS', cursive, sans-serif; }
+#ui .screen {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 20px; padding: 16px;
+  box-sizing: border-box; text-align: center; overflow: hidden;
+  pointer-events: auto; background: linear-gradient(#4FC3F7, #B3E5FC);
+  animation: screen-in 0.35s ease-out;
+}
+#ui .title { margin: 0; color: #fff; font-size: clamp(28px, 6vw, 56px); text-shadow: 0 3px 0 rgba(0, 0, 0, 0.2); }
+#ui .btn {
+  min-height: 64px; padding: 12px 32px; font-size: 32px; font-family: inherit;
+  color: #fff; background: #43A047; border: none; border-radius: 20px;
+  box-shadow: 0 6px 0 #2E7D32; cursor: pointer; pointer-events: auto;
+}
+#ui .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #2E7D32; }
+#ui .btn-big { font-size: 44px; padding: 20px 48px; background: #E53935; box-shadow: 0 6px 0 #B71C1C; }
+#ui .btn-big:active { box-shadow: 0 2px 0 #B71C1C; }
+#ui .btn-small { min-height: 56px; font-size: 28px; padding: 8px 20px; background: #1E88E5; box-shadow: 0 5px 0 #1565C0; }
+#ui .btn-small:active { box-shadow: 0 2px 0 #1565C0; }
+#ui .hidden { display: none; }
+#ui .btn-row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+#ui .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; max-width: 92vw; }
+#ui .card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 10px; min-width: 130px; min-height: 64px; background: #fff;
+  border: 4px solid transparent; border-radius: 20px; font-family: inherit;
+  cursor: pointer; pointer-events: auto; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+#ui .card.selected { border-color: #FDD835; transform: scale(1.06); }
+#ui .card-label { font-size: 20px; color: #37474F; }
+#ui .card-emoji { font-size: 64px; line-height: 1; }
+#ui .card-track .card-label { color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+/* HUD */
+#ui .hud { position: absolute; inset: 0; pointer-events: none; }
+#ui .hud-stars {
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  font-size: 28px; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+}
+#ui .btn-corner {
+  position: absolute; min-height: 56px; width: 56px; height: 56px; padding: 0;
+  font-size: 26px; border-radius: 50%; background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.2);
+}
+#ui .btn-corner:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2); }
+#ui .hud .btn-mute { top: 10px; left: 10px; }
+#ui .hud .btn-home { top: 10px; right: 10px; }
+/* Оверлей завдань */
+#ui .task {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  pointer-events: auto; background: rgba(0, 0, 0, 0.35); animation: screen-in 0.25s ease-out;
+}
+#ui .task-box {
+  display: flex; flex-direction: column; gap: 16px; align-items: center;
+  background: #FFF8E1; border-radius: 24px; padding: 24px; max-width: 92vw;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+#ui .task-prompt { font-size: 34px; color: #37474F; }
+#ui .task-visual { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+#ui .task-emoji { font-size: 40px; }
+#ui .task-plus { font-size: 40px; color: #37474F; margin: 0 8px; }
+#ui .task-options { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+#ui .task-option { min-width: 96px; background: #1E88E5; box-shadow: 0 6px 0 #1565C0; }
+#ui .task-option:active { box-shadow: 0 2px 0 #1565C0; }
+/* Фініш */
+#ui .screen-finish { background: linear-gradient(#7E57C2, #4FC3F7); }
+#ui .trophy { font-size: 110px; line-height: 1; animation: trophy-pop 0.6s ease-out; }
+#ui .finish-stars { font-size: 40px; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); }
+#ui .sticker {
+  background: #fff; border-radius: 20px; padding: 12px 24px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); animation: screen-in 0.5s ease-out;
+}
+#ui .sticker-emoji { font-size: 64px; }
+#ui .sticker-label { font-size: 22px; color: #E53935; font-weight: bold; }
+#ui .sticker-name { font-size: 20px; color: #37474F; }
+#ui .confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+#ui .confetti-piece { position: absolute; top: -16px; width: 12px; height: 12px; border-radius: 3px; animation: confetti-fall linear infinite; }
+/* Анімації */
+@keyframes screen-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+#ui .shake { animation: shake 0.4s ease-in-out; }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+#ui .pulse { animation: pulse 0.8s ease-in-out infinite; background: #43A047; box-shadow: 0 6px 0 #2E7D32; }
+@keyframes trophy-pop { from { transform: scale(0); } 60% { transform: scale(1.2); } to { transform: scale(1); } }
+@keyframes confetti-fall { to { transform: translateY(110vh) rotate(720deg); } }
