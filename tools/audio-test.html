@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Тест звуку — Ромчик-Гонщик</title>
+  <style>
+    body {
+      font-family: "Chalkboard SE","Comic Sans MS",cursive,sans-serif;
+      background: #E1F5FE; margin: 0; padding: 16px;
+    }
+    h1 { font-size: 24px; }
+    h2 { font-size: 20px; margin: 16px 0 8px; }
+    button {
+      font-family: inherit; font-size: 20px; min-height: 48px;
+      margin: 4px; padding: 8px 16px; border-radius: 12px;
+      border: 2px solid #0288D1; background: #fff; cursor: pointer;
+    }
+    input[type='range'] { width: 240px; vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <h1>Тест звуку 🔊</h1>
+  <h2>Ефекти</h2>
+  <div id="sfx"></div>
+  <h2>Мотор</h2>
+  <button id="engine-start">Завести мотор</button>
+  <button id="engine-stop">Заглушити</button>
+  <label>Швидкість <input id="speed" type="range" min="0" max="1" step="0.01" value="0"></label>
+  <h2>Озвучка</h2>
+  <div id="phrases"></div>
+  <h2>Тиша</h2>
+  <button id="mute">🔊 Звук увімкнено</button>
+  <script src="../js/audio.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      const audio = window.RG.audio;
+      const SFX = ['honk', 'ding', 'wrong', 'train', 'whistle', 'win', 'pop', 'click', 'crash'];
+      const PHRASES = [
+        'Привіт, Ромчику!',
+        'Проїдь через букву А!',
+        'Скільки вагонів у потяга?',
+        'Молодець, Ромчику!'
+      ];
+      const sfxBox = document.getElementById('sfx');
+      SFX.forEach(function (name) {
+        const b = document.createElement('button');
+        b.textContent = name;
+        b.addEventListener('click', function () { audio.init(); audio.sfx(name); });
+        sfxBox.appendChild(b);
+      });
+      const phraseBox = document.getElementById('phrases');
+      PHRASES.forEach(function (text) {
+        const b = document.createElement('button');
+        b.textContent = text;
+        b.addEventListener('click', function () { audio.init(); audio.speak(text); });
+        phraseBox.appendChild(b);
+      });
+      document.getElementById('engine-start').addEventListener('click', function () {
+        audio.init();
+        audio.startEngine();
+      });
+      document.getElementById('engine-stop').addEventListener('click', function () {
+        audio.stopEngine();
+      });
+      document.getElementById('speed').addEventListener('input', function (e) {
+        audio.engine(parseFloat(e.target.value));
+      });
+      const muteBtn = document.getElementById('mute');
+      muteBtn.addEventListener('click', function () {
+        audio.setMuted(!audio.isMuted());
+        muteBtn.textContent = audio.isMuted() ? '🔇 Звук вимкнено' : '🔊 Звук увімкнено';
+      });
+    })();
+  </script>
+</body>
+</html>
