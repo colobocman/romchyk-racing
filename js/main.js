@@ -20,6 +20,7 @@
   let pointerDown = false;
   const keys = { left: false, right: false };
   let lastTime = 0;
+  let finishTimer = null;
 
   function storageGet(key) {
     try { return localStorage.getItem(key); } catch (e) { return null; }
@@ -106,6 +107,10 @@
     screens.hideTask();
     screens.hideHUD();
     r = null;
+    if (finishTimer !== null) {
+      clearTimeout(finishTimer);
+      finishTimer = null;
+    }
   }
 
   function onRaceFinish() {
@@ -113,7 +118,8 @@
     audio.sfx('win');
     audio.speak('Фініш! Перемога!');
     r.confetti();
-    setTimeout(function () {
+    finishTimer = setTimeout(function () {
+      finishTimer = null;
       const sticker = learning.awardSticker(progress);
       saveProgress();
       screens.hideHUD();
@@ -175,6 +181,10 @@
       if (pointerDown && r) r.setPointerX(pointerRatio(e));
     });
     window.addEventListener('pointerup', function () {
+      pointerDown = false;
+      if (r) r.setPointerX(null);
+    });
+    window.addEventListener('pointercancel', function () {
       pointerDown = false;
       if (r) r.setPointerX(null);
     });

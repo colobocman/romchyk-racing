@@ -17,6 +17,17 @@
     return e;
   }
 
+  // Кутова кнопка звуку — використовується на всіх екранах, щоб перемикач
+  // 🔊/🔇 завжди був доступний (вимога специфікації).
+  function buildMuteButton(className) {
+    const mute = el('button', className || 'btn btn-corner btn-mute', root.audio.isMuted() ? '🔇' : '🔊');
+    mute.addEventListener('click', function () {
+      if (cb.onMuteToggle) cb.onMuteToggle();
+      mute.textContent = root.audio.isMuted() ? '🔇' : '🔊';
+    });
+    return mute;
+  }
+
   screens.init = function (callbacks) {
     cb = callbacks || {};
     ui = document.getElementById('ui');
@@ -46,11 +57,7 @@
     if (hud) return;
     hud = el('div', 'hud');
     hudStars = el('div', 'hud-stars', '⭐ 0');
-    const mute = el('button', 'btn btn-corner btn-mute', root.audio.isMuted() ? '🔇' : '🔊');
-    mute.addEventListener('click', function () {
-      if (cb.onMuteToggle) cb.onMuteToggle();
-      mute.textContent = root.audio.isMuted() ? '🔇' : '🔊';
-    });
+    const mute = buildMuteButton();
     const home = el('button', 'btn btn-corner btn-home', '🏠');
     home.addEventListener('click', function () {
       root.audio.sfx('click');
@@ -142,18 +149,14 @@
       if (cb.onPlay) cb.onPlay();
     });
     s.appendChild(play);
-    const mute = el('button', 'btn btn-small', root.audio.isMuted() ? '🔇' : '🔊');
-    mute.addEventListener('click', function () {
-      if (cb.onMuteToggle) cb.onMuteToggle();
-      mute.textContent = root.audio.isMuted() ? '🔇' : '🔊';
-    });
-    s.appendChild(mute);
+    s.appendChild(buildMuteButton('btn btn-small'));
     root.audio.speak('Ромчик-Гонщик! Натисни грати!');
     return s;
   }
 
   function buildCardScreen(titleText, items, renderCard, speakFor, onDone) {
     const s = el('div', 'screen');
+    s.appendChild(buildMuteButton());
     s.appendChild(el('h2', 'title', titleText));
     const grid = el('div', 'cards');
     const next = el('button', 'btn btn-next hidden', 'Далі ▶');
@@ -222,6 +225,7 @@
 
   function buildFinish(data) {
     const s = el('div', 'screen screen-finish');
+    s.appendChild(buildMuteButton());
     const conf = el('div', 'confetti');
     const colors = ['#E53935', '#FDD835', '#43A047', '#1E88E5', '#8E24AA', '#FF9800'];
     for (let i = 0; i < 40; i++) {
