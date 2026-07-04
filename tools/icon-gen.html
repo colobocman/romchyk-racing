@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <title>Генератор іконок — Ромчик-Гонщик</title>
+  <style>
+    body { font-family: 'Chalkboard SE', 'Comic Sans MS', cursive, sans-serif; background: #ECEFF1; margin: 16px; }
+    canvas { border: 1px solid #90A4AE; margin: 0 8px 8px 0; vertical-align: top; }
+    textarea { width: 100%; height: 64px; font-size: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Іконки «Ромчик-Гонщик»</h1>
+  <div>
+    <canvas id="c512" width="512" height="512"></canvas>
+    <canvas id="c192" width="192" height="192"></canvas>
+    <canvas id="c180" width="180" height="180"></canvas>
+  </div>
+  <h2>base64 (PNG, без префікса data:)</h2>
+  <p>512×512</p><textarea id="b64-512"></textarea>
+  <p>192×192</p><textarea id="b64-192"></textarea>
+  <p>180×180</p><textarea id="b64-180"></textarea>
+  <script src="../js/utils.js"></script>
+  <script src="../js/sprites.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      const CAR = { id: 'race', label: 'Червона гоночна', color: '#E53935', accent: '#FFCDD2', shape: 'race' };
+
+      function drawIcon(ctx, size) {
+        const s = size / 512;
+        const sky = ctx.createLinearGradient(0, 0, 0, 300 * s);
+        sky.addColorStop(0, '#29B6F6');
+        sky.addColorStop(1, '#B3E5FC');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, size, 300 * s);
+        ctx.fillStyle = '#FFEB3B';
+        ctx.beginPath();
+        ctx.arc(404 * s, 104 * s, 52 * s, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#66BB6A';
+        ctx.fillRect(0, 300 * s, size, size - 300 * s);
+        ctx.fillStyle = '#546E7A';
+        ctx.beginPath();
+        ctx.moveTo(226 * s, 300 * s);
+        ctx.lineTo(286 * s, 300 * s);
+        ctx.lineTo(396 * s, size);
+        ctx.lineTo(116 * s, size);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#FFF176';
+        ctx.lineWidth = 10 * s;
+        ctx.setLineDash([36 * s, 28 * s]);
+        ctx.beginPath();
+        ctx.moveTo(256 * s, 300 * s);
+        ctx.lineTo(256 * s, size);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        RG.sprites.drawCar(ctx, 256 * s, 484 * s, 220 * s, CAR, {});
+      }
+
+      [512, 192, 180].forEach(function (size) {
+        const canvas = document.getElementById('c' + size);
+        const ctx = canvas.getContext('2d');
+        drawIcon(ctx, size);
+        const b64 = canvas.toDataURL('image/png').split(',')[1];
+        document.getElementById('b64-' + size).textContent = b64;
+      });
+    })();
+  </script>
+</body>
+</html>

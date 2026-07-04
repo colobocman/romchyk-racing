@@ -8,3 +8,4 @@ require('./tracks.test.js');
 require('./race.test.js');
 require('./events.test.js');
 require('./screens.test.js');
+require('./pwa.test.js');
