@@ -1,4 +1,4 @@
-const CACHE = 'rg-v1';
+const CACHE = 'rg-v2';
 const FILES = [
   './',
   './index.html',
