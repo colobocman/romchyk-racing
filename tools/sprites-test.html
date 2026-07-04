@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<title>Галерея спрайтів — Ромчик-Гонщик</title>
+<style>
+  body { font-family: "Chalkboard SE","Comic Sans MS",cursive,sans-serif; background: #E1F5FE; margin: 16px; }
+  h2 { margin: 14px 0 6px; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .cell { background: #fff; border-radius: 12px; padding: 8px; text-align: center; }
+  .cell div { font-size: 14px; }
+  canvas { display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+<h1>Галерея спрайтів</h1>
+<h2>Машинки (вид ззаду)</h2>
+<div class="row" id="cars"></div>
+<h2>Машинки з водієм, поворотом і гальмами</h2>
+<div class="row" id="carsOpts"></div>
+<h2>Персонажі</h2>
+<div class="row" id="chars"></div>
+<h2>Емодзі-спрайти</h2>
+<div class="row" id="emojis"></div>
+<script src="../js/sprites.js"></script>
+<script>
+  const sprites = RG.sprites;
+  function cell(parentId, label, w, h, draw) {
+    const box = document.createElement('div');
+    box.className = 'cell';
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    draw(c.getContext('2d'));
+    const cap = document.createElement('div');
+    cap.textContent = label;
+    box.appendChild(c);
+    box.appendChild(cap);
+    document.getElementById(parentId).appendChild(box);
+  }
+  sprites.CAR_TYPES.forEach(function (car) {
+    cell('cars', car.label, 140, 130, function (ctx) {
+      sprites.drawCar(ctx, 70, 120, 110, car);
+    });
+    cell('carsOpts', car.label, 140, 130, function (ctx) {
+      sprites.drawCar(ctx, 70, 120, 110, car, { steer: 0.7, driver: sprites.CHARACTERS[3], brake: true });
+    });
+  });
+  sprites.CHARACTERS.forEach(function (ch) {
+    cell('chars', ch.name, 120, 130, function (ctx) {
+      sprites.drawCharacter(ctx, 60, 10, 110, ch);
+    });
+  });
+  ['🌲', '🌴', '🚧', '🚂', '🚃', '⛵', '🏠'].forEach(function (e) {
+    cell('emojis', e, 80, 80, function (ctx) {
+      sprites.drawSprite(ctx, sprites.emoji(e, 64), 40, 76, 64);
+    });
+  });
+</script>
+</body>
+</html>
