@@ -82,14 +82,15 @@
       ctx.fillStyle = carDef.color;
       roundedRect(ctx, -cabW / 2, cabTop + 0.06 * w, cabW, cabH - 0.06 * w, 0.05 * w);
       ctx.fill();
-      ctx.fillStyle = '#37474F';
+      ctx.fillStyle = '#263238';
       roundedRect(ctx, -cabW / 2 + 0.06 * w, cabTop + 0.1 * w, cabW - 0.12 * w, cabH - 0.13 * w, 0.03 * w);
       ctx.fill();
+      // Заднє антикрило: темні стійки та темна планка над кабіною (вид ззаду).
       ctx.fillStyle = '#37474F';
-      ctx.fillRect(-0.4 * w, cabTop - 0.02 * w, 0.05 * w, 0.09 * w);
-      ctx.fillRect(0.35 * w, cabTop - 0.02 * w, 0.05 * w, 0.09 * w);
-      ctx.fillStyle = carDef.accent;
-      roundedRect(ctx, -0.45 * w, cabTop - 0.09 * w, 0.9 * w, 0.07 * w, 0.03 * w);
+      ctx.fillRect(-0.34 * w, cabTop - 0.06 * w, 0.05 * w, 0.1 * w);
+      ctx.fillRect(0.29 * w, cabTop - 0.06 * w, 0.05 * w, 0.1 * w);
+      ctx.fillStyle = '#455A64';
+      roundedRect(ctx, -0.45 * w, cabTop - 0.13 * w, 0.9 * w, 0.08 * w, 0.03 * w);
       ctx.fill();
     } else if (shape === 'jeep') {
       ctx.fillStyle = carDef.color;
@@ -147,7 +148,10 @@
       const d = opts.driver;
       const headR = 0.1 * w;
       const open = shape === 'cabrio' || shape === 'buggy';
-      const headY = open ? bodyTop - 0.1 * w : cabTop;
+      let headY;
+      if (open) headY = bodyTop - 0.1 * w;
+      else if (shape === 'race') headY = cabTop + 0.06 * w; // шолом визирає з кокпіту, під антикрилом
+      else headY = cabTop;
       ctx.fillStyle = d.shirt;
       roundedRect(ctx, -0.14 * w, headY + headR * 0.5, 0.28 * w, 0.12 * w, 0.04 * w);
       ctx.fill();

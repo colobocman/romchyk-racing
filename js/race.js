@@ -38,6 +38,18 @@
     }
   }
 
+  // Фінішні прапори 🏁 обабіч дороги на останніх сегментах — дитина бачить,
+  // де фініш, коли під'їжджає (гонка завершується за 2 сегменти до кінця траси).
+  // Ставимо коридор із кількох пар прапорів прямо на краю дороги.
+  function placeFinish(segments) {
+    for (let i = 2; i <= 7; i++) {
+      const idx = segments.length - i;
+      if (idx < 0) continue;
+      segments[idx].sprites.push({ key: '🏁', offset: -0.95, scale: 1.5 });
+      segments[idx].sprites.push({ key: '🏁', offset: 0.95, scale: 1.5 });
+    }
+  }
+
   function drawStopScene(ctx, w, h, scene) {
     ctx.save();
     ctx.textAlign = 'center';
@@ -50,12 +62,12 @@
       const total = (scene.count + 1) * size * 1.05;
       const p = utils.easeInOut(Math.min(scene.t / 2.5, 1));
       const cx = (w + total / 2) + (w / 2 - (w + total / 2)) * p;
-      const y = h * 0.42 + Math.sin(scene.t * 6) * 2;
+      const y = h * 0.36 + Math.sin(scene.t * 6) * 2;
       for (let i = 0; i <= scene.count; i++) {
         ctx.fillText(i === 0 ? '🚂' : '🚃', cx - total / 2 + size * 1.05 * i + size / 2, y);
       }
       // Опущений шлагбаум — смугаста перекладина.
-      const barY = h * 0.58;
+      const barY = h * 0.48;
       const stripes = 8;
       const stripeW = w * 0.7 / stripes;
       for (let i = 0; i < stripes; i++) {
@@ -63,27 +75,26 @@
         ctx.fillRect(w * 0.15 + i * stripeW, barY, stripeW, h * 0.02);
       }
     } else if (scene.type === 'police') {
-      // Доброзичлива поліцейська машина з мигалками, що блимають.
-      const size = Math.round(h * 0.2);
+      // Доброзичлива поліцейська машина стоїть на дорозі при горизонті:
+      // маленькі мигалки прямо над дахом, що блимають.
+      const size = Math.round(h * 0.18);
+      const cy = h * 0.5;
       ctx.font = size + 'px sans-serif';
-      ctx.fillText('🚓', w / 2, h * 0.5);
+      ctx.fillText('🚓', w / 2, cy);
       const on = Math.floor(scene.t * 4) % 2 === 0;
-      ctx.globalAlpha = on ? 1 : 0.25;
-      ctx.fillStyle = '#2196F3';
+      ctx.fillStyle = on ? '#2196F3' : '#90CAF9';
       ctx.beginPath();
-      ctx.arc(w / 2 - size * 0.35, h * 0.5 - size * 0.65, size * 0.12, 0, Math.PI * 2);
+      ctx.arc(w / 2 - size * 0.17, cy - size * 0.42, size * 0.07, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = on ? 0.25 : 1;
-      ctx.fillStyle = '#E53935';
+      ctx.fillStyle = on ? '#EF9A9A' : '#E53935';
       ctx.beginPath();
-      ctx.arc(w / 2 + size * 0.35, h * 0.5 - size * 0.65, size * 0.12, 0, Math.PI * 2);
+      ctx.arc(w / 2 + size * 0.17, cy - size * 0.42, size * 0.07, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = 1;
     } else if (scene.type === 'roadwork') {
       // Екскаватор 🚜 і рівно scene.count конусів 🚧, що з'являються по черзі.
       const size = Math.round(Math.min(w / (scene.count + 3), h * 0.12));
       ctx.font = Math.round(size * 1.6) + 'px sans-serif';
-      ctx.fillText('🚜', w * 0.16, h * 0.45);
+      ctx.fillText('🚜', w * 0.16, h * 0.4);
       ctx.font = size + 'px sans-serif';
       const startX = w * 0.3;
       const step = (w * 0.62 - startX) / Math.max(scene.count - 1, 1);
@@ -91,7 +102,7 @@
         const appear = utils.clamp(scene.t * 3 - i * 0.4, 0, 1);
         if (appear <= 0) continue;
         ctx.globalAlpha = appear;
-        ctx.fillText('🚧', startX + i * step, h * 0.45);
+        ctx.fillText('🚧', startX + i * step, h * 0.4);
       }
       ctx.globalAlpha = 1;
     }
@@ -115,6 +126,7 @@
     const built = road.buildTrack({ layout: layout });
     decorate(built.segments, trackDef.scenery);
     placeCones(built.segments);
+    placeFinish(built.segments);
 
     const lanes = [-0.5, 0, 0.5];
     const r = {
@@ -172,7 +184,9 @@
         }
       }
       r.playerX += move;
-      r.playerX -= dt * 0.3 * (r.speed / race.MAX_SPEED) * seg.curve;
+      // М'яка центробіжна сила: удвічі слабша за кермо, щоб дитина завжди могла
+      // повернутись у смугу навіть на крутих поворотах (сила ±6).
+      r.playerX -= dt * 0.18 * (r.speed / race.MAX_SPEED) * seg.curve;
       r.playerX = utils.clamp(r.playerX, -2, 2);
       steer += ((move > 0 ? 1 : (move < 0 ? -1 : 0)) - steer) * Math.min(1, dt * 8);
       bgShift += seg.curve * (r.speed / race.MAX_SPEED) * dt * 60;
@@ -252,8 +266,11 @@
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, W, H);
 
-      hillLayer(pal.hillFar, horizon + 2, H * 0.10, bgShift * 0.3, W);
-      hillLayer(pal.hillNear, horizon + 2, H * 0.16, bgShift * 0.6 + 500, W);
+      // Море — пологі невисокі хвилі; гори/місто — вищі силуети пагорбів/будинків.
+      const farAmp = trackDef.bgBoats ? H * 0.05 : H * 0.10;
+      const nearAmp = trackDef.bgBoats ? H * 0.08 : H * 0.16;
+      hillLayer(pal.hillFar, horizon + 2, farAmp, bgShift * 0.3, W);
+      hillLayer(pal.hillNear, horizon + 2, nearAmp, bgShift * 0.6 + 500, W);
 
       const cloud = sprites.emoji('☁️', 64);
       for (let i = 0; i < 4; i++) {
@@ -276,6 +293,11 @@
         }
       }
 
+      // Базова заливка землі під горизонтом: біля фінішу, де дорога закінчується,
+      // не проступає порожнє небо — видно суцільну землю/траву/пісок траси.
+      ctx.fillStyle = pal.ground;
+      ctx.fillRect(0, horizon, W, H - horizon);
+
       const baseSeg = road.findSegment(r.segments, r.playerZ);
       const basePercent = (r.playerZ % road.SEG_LEN) / road.SEG_LEN;
       const playerY = utils.lerp(baseSeg.p1.world.y, baseSeg.p2.world.y, basePercent);
@@ -285,8 +307,10 @@
       let dx = -(baseSeg.curve * basePercent);
 
       for (let n = 0; n < road.DRAW_DIST; n++) {
-        const seg = r.segments[(baseSeg.index + n) % r.segments.length];
-        const camZ = r.playerZ - (seg.index < baseSeg.index ? r.length : 0);
+        const segIdx = baseSeg.index + n;
+        if (segIdx >= r.segments.length) break; // не «загортаємо» трасу — біля фінішу дорога чесно закінчується
+        const seg = r.segments[segIdx];
+        const camZ = r.playerZ;
         road.project(seg.p1, camX - x, playerY + road.CAM_HEIGHT, camZ, W, H);
         road.project(seg.p2, camX - x - dx, playerY + road.CAM_HEIGHT, camZ, W, H);
         x += dx;
@@ -306,18 +330,27 @@
       }
 
       for (let n = road.DRAW_DIST - 1; n >= 1; n--) {
-        const seg = r.segments[(baseSeg.index + n) % r.segments.length];
-        if (seg.p1.camera.z <= road.camDepth || seg.p1.screen.y >= seg.clip) continue;
+        const segIdx = baseSeg.index + n;
+        if (segIdx >= r.segments.length) continue;
+        const seg = r.segments[segIdx];
+        if (seg.p1.camera.z <= road.camDepth) continue;
+        const clipY = seg.clip; // лінія оклюзії: ховаємо частину спрайта за ближчим пагорбом
+        if (clipY <= 0) continue;
         const s = seg.p1.screen;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, W, clipY);
+        ctx.clip();
         for (let i = 0; i < seg.sprites.length; i++) {
           const sp = seg.sprites[i];
-          sprites.drawSprite(ctx, sprites.emoji(sp.key, 64), s.x + s.w * sp.offset, s.y, s.w * 0.4 * (sp.scale || 1));
+          sprites.drawSprite(ctx, sprites.emoji(sp.key, 128), s.x + s.w * sp.offset, s.y, s.w * 0.4 * (sp.scale || 1));
         }
         for (let k = 0; k < r.opponents.length; k++) {
           const o = r.opponents[k];
-          if (Math.floor(o.z / road.SEG_LEN) % r.segments.length !== seg.index) continue;
+          if (Math.floor(o.z / road.SEG_LEN) !== seg.index) continue;
           sprites.drawCar(ctx, s.x + s.w * o.x, s.y, s.w * 0.3, o.carDef, { driver: o.charDef, steer: 0, brake: false });
         }
+        ctx.restore();
       }
 
       sprites.drawCar(ctx, W / 2, H - H * 0.03, W * 0.16, r.carDef, {

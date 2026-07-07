@@ -60,11 +60,14 @@ road.addRoad(segments, 100, 100, 100, 0, 0); // 300 сегментів, довж
 
 const ui = {
   shownTask: null, hiddenN: 0, hud: null, wrongIdx: null, correctIdx: null,
+  promptText: null, promptHiddenN: 0,
   showTask(task, cb) { this.shownTask = { task, cb }; },
   hideTask() { this.hiddenN++; this.shownTask = null; },
   updateHUD(d) { this.hud = d; },
   markWrong(i) { this.wrongIdx = i; },
-  markCorrect(i) { this.correctIdx = i; }
+  markCorrect(i) { this.correctIdx = i; },
+  showPrompt(t) { this.promptText = t; },
+  hidePrompt() { this.promptHiddenN++; this.promptText = null; }
 };
 const r = {
   length: segments.length * road.SEG_LEN,
@@ -88,6 +91,7 @@ r.onTick(r, 0.016);
 check('gate: завдання згенеровано заздалегідь', gate1.task !== null);
 check('gate: laneXs відповідає кількості опцій',
   gate1.laneXs.length === gate1.task.options.length);
+check('gate: банер підказки показано', ui.promptText === gate1.task.prompt);
 const gseg = road.findSegment(segments, gate1.z);
 check('gate: таблички додано у сегмент', gseg.sprites.length === gate1.task.options.length);
 
@@ -99,6 +103,8 @@ check('gate: правильний проїзд дає зірочку', prg.stars
 check('gate: конфеті', r.confettiN === 1);
 check('gate: HUD оновлено', ui.hud !== null && ui.hud.stars === 1);
 check('gate: подія завершена', gate1.done === true);
+check('gate: банер підказки сховано', ui.promptHiddenN >= 1);
+check('gate: таблички прибрано після проїзду', gseg.sprites.length === 0);
 
 // Зупинка: перша не-gate подія (z = 0.33*60000 = 19800).
 const stop1 = ctrl.events.filter(e => e.type !== 'gate')[0];
@@ -121,6 +127,9 @@ ui.shownTask.cb(sWrong);
 check('stop: неправильна — кнопка трясеться', ui.wrongIdx === sWrong);
 check('stop: неправильна — підказка пульсує', ui.correctIdx === sCorrect);
 check('stop: неправильна — гонка стоїть', r.state === 'paused');
+const streakAfterWrong = prg[stop1.task.skill].streak;
+ui.shownTask.cb(sWrong); // друга помилка не має штрафувати прогрес удруге
+check('stop: повторна помилка не штрафує прогрес', prg[stop1.task.skill].streak === streakAfterWrong);
 ui.shownTask.cb(sCorrect);
 check('stop: правильна — зірочка', prg.stars === starsBefore + 1);
 check('stop: правильна — оверлей сховано', ui.hiddenN === 1);

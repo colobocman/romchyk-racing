@@ -25,6 +25,8 @@
       for (let j = 0; j < stops.length; j++) {
         if (Math.abs(z - stops[j].z) < minDist) z -= minDist;
       }
+      // Не даємо воротам «випасти» на початок траси (z<=0) при зсуві на коротких трасах.
+      z = Math.max(z, 2 * road.SEG_LEN);
       evs.push({ type: 'gate', z: z, task: null, done: false });
     }
     evs.sort(function (a, b) { return a.z - b.z; });
@@ -54,15 +56,20 @@
     function prepareGate(ev) {
       ev.task = learning.makeGateTask(progress, rng);
       ev.laneXs = ev.task.options.length === 2 ? [-0.45, 0.45] : [-0.55, 0, 0.55];
-      const seg = road.findSegment(r.segments, ev.z);
+      ev.seg = road.findSegment(r.segments, ev.z);
+      ev.spriteStart = ev.seg.sprites.length;
       for (let i = 0; i < ev.task.options.length; i++) {
-        seg.sprites.push({ key: String(ev.task.options[i].text), offset: ev.laneXs[i], scale: 1.5 });
+        ev.seg.sprites.push({ key: String(ev.task.options[i].text), offset: ev.laneXs[i], scale: 1.1 });
       }
+      if (ui.showPrompt) ui.showPrompt(ev.task.prompt); // видима підказка на екрані, а не лише голос
       audio.speak(ev.task.say);
     }
 
     function passGate(ev) {
       ev.done = true;
+      if (ui.hidePrompt) ui.hidePrompt();
+      // Прибираємо таблички воріт із сегмента, щоб вони не «зависали» на другому колі кадру.
+      if (ev.seg && typeof ev.spriteStart === 'number') ev.seg.sprites.splice(ev.spriteStart, ev.task.options.length);
       const idx = events.gateChoice(ev.laneXs, r.playerX);
       const correct = ev.task.options[idx].correct;
       learning.applyAnswer(progress, ev.task.skill, correct);
@@ -83,21 +90,31 @@
     function startStop(ev) {
       ev.done = true;
       ctrl.active = ev;
+      if (ui.hidePrompt) ui.hidePrompt();
       ev.task = learning.makeStopTask(progress, ev.type, rng);
       r.pause();
-      r.stopScene = { type: ev.type, t: 0, count: ev.task.visual ? ev.task.visual.count : 0 };
+      // На ремонті з прикладом (a+b) сцена малює декоративні конуси, а не «a» —
+      // рахувати треба машинки в коробці завдання, тож число сцени не збігається з відповіддю.
+      let sceneCount = ev.task.visual ? ev.task.visual.count : 0;
+      if (ev.type === 'roadwork' && ev.task.kind === 'math') sceneCount = 3;
+      r.stopScene = { type: ev.type, t: 0, count: sceneCount };
       if (ev.type === 'train') audio.sfx('train');
     }
 
     function showStopTask(ev) {
       ev.taskShown = true;
-      audio.speak(ev.task.say || ev.task.prompt);
+      // Озвучення робить screens.showTask — тут НЕ дублюємо, інакше synth.cancel() «заїкається».
       ui.showTask(ev.task, function (idx) { onStopAnswer(ev, idx); });
     }
 
     function onStopAnswer(ev, idx) {
       const correct = ev.task.options[idx].correct;
-      learning.applyAnswer(progress, ev.task.skill, correct);
+      // Прогрес рахуємо лише за ПЕРШУ спробу: два випадкові тапи 4-річки не мають
+      // штрафувати рівень двічі (правильна кнопка вже підказана пульсацією).
+      if (!ev.answered) {
+        ev.answered = true;
+        learning.applyAnswer(progress, ev.task.skill, correct);
+      }
       if (correct) {
         audio.sfx('ding');
         learning.awardStar(progress);

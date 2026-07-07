@@ -28,6 +28,28 @@
     return mute;
   }
 
+  // Спільний декор екранів: сонце, хмаринки та смуга дороги з машинками унизу.
+  // Все декоративне — pointer-events:none, щоб не перехоплювати кліки по кнопках.
+  function decorScreen(s) {
+    const sky = el('div', 'scene-sky');
+    sky.appendChild(el('div', 'scene-sun', '☀️'));
+    sky.appendChild(el('div', 'scene-cloud scene-cloud-1', '☁️'));
+    sky.appendChild(el('div', 'scene-cloud scene-cloud-2', '☁️'));
+    sky.appendChild(el('div', 'scene-cloud scene-cloud-3', '☁️'));
+    s.appendChild(sky);
+
+    const road = el('div', 'scene-road');
+    const dash = el('div', 'scene-dash');
+    road.appendChild(dash);
+    const cars = el('div', 'scene-cars');
+    ['🏎️', '🚙', '🚗', '🚕', '🚓'].forEach(function (c, i) {
+      const car = el('div', 'scene-car scene-car-' + i, c);
+      cars.appendChild(car);
+    });
+    road.appendChild(cars);
+    s.appendChild(road);
+  }
+
   screens.init = function (callbacks) {
     cb = callbacks || {};
     ui = document.getElementById('ui');
@@ -116,7 +138,21 @@
     box.appendChild(row);
     taskEl.appendChild(box);
     ui.appendChild(taskEl);
-    if (task.say) root.audio.speak(task.say);
+    if (task.say || task.prompt) root.audio.speak(task.say || task.prompt);
+  };
+
+  // --- Банер підказки воріт (питання поверх гонки) ---
+  let promptEl = null;
+
+  screens.showPrompt = function (text) {
+    screens.hidePrompt();
+    promptEl = el('div', 'hud-prompt', text);
+    ui.appendChild(promptEl);
+  };
+
+  screens.hidePrompt = function () {
+    if (promptEl && promptEl.parentNode) promptEl.parentNode.removeChild(promptEl);
+    promptEl = null;
   };
 
   screens.markWrong = function (index) {
@@ -141,23 +177,28 @@
   // --- Білдери екранів (кроки 5–7) ---
 
   function buildMenu() {
-    const s = el('div', 'screen');
-    s.appendChild(el('h1', 'title', 'Ромчик-Гонщик 🏎️'));
+    const s = el('div', 'screen screen-menu');
+    decorScreen(s);
+    s.appendChild(buildMuteButton());
+    const hero = el('div', 'menu-hero');
+    hero.appendChild(el('h1', 'title title-bounce', 'Ромчик-Гонщик 🏎️'));
     const play = el('button', 'btn btn-big', 'ГРАТИ ▶');
     play.addEventListener('click', function () {
       root.audio.sfx('click');
       if (cb.onPlay) cb.onPlay();
     });
-    s.appendChild(play);
-    s.appendChild(buildMuteButton('btn btn-small'));
+    hero.appendChild(play);
+    s.appendChild(hero);
     root.audio.speak('Ромчик-Гонщик! Натисни грати!');
     return s;
   }
 
   function buildCardScreen(titleText, items, renderCard, speakFor, onDone) {
     const s = el('div', 'screen');
+    decorScreen(s);
     s.appendChild(buildMuteButton());
-    s.appendChild(el('h2', 'title', titleText));
+    const hero = el('div', 'menu-hero');
+    hero.appendChild(el('h2', 'title', titleText));
     const grid = el('div', 'cards');
     const next = el('button', 'btn btn-next hidden', 'Далі ▶');
     let picked = null;
@@ -179,8 +220,9 @@
       root.audio.sfx('click');
       if (picked) onDone(picked);
     });
-    s.appendChild(grid);
-    s.appendChild(next);
+    hero.appendChild(grid);
+    hero.appendChild(next);
+    s.appendChild(hero);
     root.audio.speak(titleText);
     return s;
   }
@@ -211,12 +253,47 @@
       function (car) { if (cb.onCarPicked) cb.onCarPicked(car); });
   }
 
+  // Міні-прев'ю траси: небо, узбіччя і дорога, що збігається до горизонту, у палітрі траси.
+  function drawTrackPreview(ctx, w, h, tr) {
+    const p = tr.palette;
+    const hor = h * 0.46;
+    const sky = ctx.createLinearGradient(0, 0, 0, hor);
+    sky.addColorStop(0, p.skyTop);
+    sky.addColorStop(1, p.skyBottom);
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, hor);
+    ctx.fillStyle = p.ground;
+    ctx.fillRect(0, hor, w, h - hor);
+    ctx.fillStyle = p.road;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.5 - w * 0.06, hor);
+    ctx.lineTo(w * 0.5 + w * 0.06, hor);
+    ctx.lineTo(w * 0.9, h);
+    ctx.lineTo(w * 0.1, h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = p.lane;
+    ctx.lineWidth = Math.max(2, w * 0.02);
+    ctx.setLineDash([w * 0.05, w * 0.05]);
+    ctx.beginPath();
+    ctx.moveTo(w * 0.5, hor);
+    ctx.lineTo(w * 0.5, h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = Math.round(h * 0.3) + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(tr.emoji, w * 0.5, hor * 0.5);
+  }
+
   function buildTrack() {
     return buildCardScreen('Куди поїдемо?', root.tracks.TRACKS,
       function (card, tr) {
         card.classList.add('card-track');
-        card.style.background = 'linear-gradient(' + tr.palette.skyTop + ',' + tr.palette.ground + ')';
-        card.appendChild(el('div', 'card-emoji', tr.emoji));
+        const cv = document.createElement('canvas');
+        cv.width = 150; cv.height = 110;
+        drawTrackPreview(cv.getContext('2d'), 150, 110, tr);
+        card.appendChild(cv);
         card.appendChild(el('div', 'card-label', tr.name));
       },
       function (tr) { return tr.name; },

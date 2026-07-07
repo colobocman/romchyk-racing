@@ -51,8 +51,8 @@
       name: 'Море',
       emoji: '🌊',
       palette: {
-        skyTop: '#29B6F6', skyBottom: '#FFF9C4',
-        hillFar: '#0288D1', hillNear: '#4DD0E1',
+        skyTop: '#29B6F6', skyBottom: '#B3E5FC',
+        hillFar: '#0277BD', hillNear: '#4FC3F7',
         ground: '#FFE082', groundAlt: '#F7D670',
         road: '#8D8D8D', roadAlt: '#858585',
         rumbleA: '#FFFFFF', rumbleB: '#039BE5',

@@ -61,6 +61,8 @@
     markWrong: function (index) { screens.markWrong(index); },
     markCorrect: function (index) { screens.markCorrect(index); },
     hideTask: function () { screens.hideTask(); },
+    showPrompt: function (text) { screens.showPrompt(text); },
+    hidePrompt: function () { screens.hidePrompt(); },
     updateHUD: function (data) {
       screens.updateHUD(data);
       saveProgress();
@@ -97,6 +99,11 @@
     });
     events.createController(r, progress, ui, Math.random);
     r.onFinish = onRaceFinish;
+    // Переносимо поточний стан керування у нову гонку (напр. дитина тримає стрілку
+    // на екрані «Ще раз!»), інакше кермо мовчить до наступного натискання.
+    r.setKeys(keys.left, keys.right);
+    pointerDown = false;
+    r.setPointerX(null);
     screens.showHUD();
     screens.updateHUD({ stars: progress.stars });
     audio.startEngine();
@@ -105,6 +112,7 @@
   function stopRace() {
     audio.stopEngine();
     screens.hideTask();
+    screens.hidePrompt();
     screens.hideHUD();
     r = null;
     if (finishTimer !== null) {
@@ -117,11 +125,13 @@
     audio.stopEngine();
     audio.sfx('win');
     audio.speak('Фініш! Перемога!');
+    screens.hidePrompt();
     r.confetti();
     finishTimer = setTimeout(function () {
       finishTimer = null;
       const sticker = learning.awardSticker(progress);
       saveProgress();
+      r = null; // зупиняємо оновлення завершеної гонки під непрозорим фініш-екраном
       screens.hideHUD();
       screens.show('finish', {
         stars: progress.stars,
@@ -216,9 +226,8 @@
     const dt = utils.clamp((ts - lastTime) / 1000, 0, 0.05);
     lastTime = ts;
     if (r) {
-      r.update(dt);
+      r.update(dt); // r.update вже модулює звук двигуна — тут не дублюємо
       r.draw();
-      audio.engine(r.speed / race.MAX_SPEED);
     } else {
       drawBackdrop();
     }
